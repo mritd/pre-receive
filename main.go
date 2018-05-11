@@ -42,6 +42,12 @@ func main() {
 
 	input, _ := ioutil.ReadAll(os.Stdin)
 	param := strings.Fields(string(input))
+
+	// allow branch/tag delete
+	if param[1] == "0000000000000000000000000000000000000000" {
+		os.Exit(0)
+	}
+
 	commitMsg := getCommitMsg(param[1])
 	commitTypes := commitMsgReg.FindAllStringSubmatch(commitMsg, -1)
 
