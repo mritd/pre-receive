@@ -81,7 +81,13 @@ func main() {
 }
 
 func getCommitMsg(odlCommitID, commitID string) []string {
+
 	getCommitMsgCmd := exec.Command("git", "log", odlCommitID+".."+commitID, "--pretty=format:%s")
+
+	if odlCommitID == "0000000000000000000000000000000000000000" {
+		getCommitMsgCmd = exec.Command("git", "log", "-1", "--pretty=format:%s")
+	}
+
 	getCommitMsgCmd.Stdin = os.Stdin
 	getCommitMsgCmd.Stderr = os.Stderr
 	b, err := getCommitMsgCmd.Output()
