@@ -36,6 +36,8 @@ const checkFailedMeassge = `####################################################
 ##                                                                          ##
 ##############################################################################`
 
+const strictMode = false
+
 var commitMsgReg = regexp.MustCompile(CommitMessagePattern)
 
 func main() {
@@ -48,32 +50,38 @@ func main() {
 		os.Exit(0)
 	}
 
-	commitMsg := getCommitMsg(param[1])
-	commitTypes := commitMsgReg.FindAllStringSubmatch(commitMsg, -1)
+	commitMsg := getCommitMsg(param[0], param[1])
+	for _, tmpStr := range commitMsg {
+		commitTypes := commitMsgReg.FindAllStringSubmatch(tmpStr, -1)
 
-	if len(commitTypes) != 1 {
-		checkFailed()
-	} else {
-		switch commitTypes[0][1] {
-		case string(FEAT):
-		case string(FIX):
-		case string(DOCS):
-		case string(STYLE):
-		case string(REFACTOR):
-		case string(TEST):
-		case string(CHORE):
-		case string(PERF):
-		case string(HOTFIX):
-		default:
-			if !strings.HasPrefix(commitMsg, "Merge branch") {
-				checkFailed()
+		if len(commitTypes) != 1 {
+			checkFailed()
+		} else {
+			switch commitTypes[0][1] {
+			case string(FEAT):
+			case string(FIX):
+			case string(DOCS):
+			case string(STYLE):
+			case string(REFACTOR):
+			case string(TEST):
+			case string(CHORE):
+			case string(PERF):
+			case string(HOTFIX):
+			default:
+				if !strings.HasPrefix(tmpStr, "Merge branch") {
+					checkFailed()
+				}
 			}
 		}
+		if !strictMode {
+			os.Exit(0)
+		}
 	}
+
 }
 
-func getCommitMsg(commitID string) string {
-	getCommitMsgCmd := exec.Command("git", "show", "-q", commitID)
+func getCommitMsg(odlCommitID, commitID string) []string {
+	getCommitMsgCmd := exec.Command("git", "log", odlCommitID+".."+commitID, "--pretty=format:%s")
 	getCommitMsgCmd.Stdin = os.Stdin
 	getCommitMsgCmd.Stderr = os.Stderr
 	b, err := getCommitMsgCmd.Output()
@@ -82,9 +90,8 @@ func getCommitMsg(commitID string) string {
 		os.Exit(1)
 	}
 
-	tmpStr := strings.Split(string(b), "\n")
-	commitMsg := strings.Join(tmpStr[3:], "")
-	return strings.TrimLeft(commitMsg, "    ")
+	commitMsg := strings.Split(string(b), "\n")
+	return commitMsg
 }
 
 func checkFailed() {
